@@ -1,9 +1,7 @@
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { Link } from 'react-router-dom';
 import { feeders, FeederStatus } from '@/data/feeders';
-import { StatusIndicator } from './StatusIndicator';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default markers
@@ -36,8 +34,8 @@ const createCustomIcon = (status: FeederStatus) => {
         align-items: center;
         justify-content: center;
       ">
-        <svg style="transform: rotate(45deg); width: 16px; height: 16px; color: white;" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        <svg style="transform: rotate(45deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="white">
+          <circle cx="12" cy="12" r="8"/>
         </svg>
       </div>
     `,
@@ -47,70 +45,89 @@ const createCustomIcon = (status: FeederStatus) => {
   });
 };
 
-function MapController() {
-  const map = useMap();
-  
+export function FeederMap() {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    // Initialize map
+    const map = L.map(mapContainerRef.current, {
+      center: [40.4168, -3.7038],
+      zoom: 15,
+      zoomControl: true,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    // Add markers for each feeder
+    feeders.forEach((feeder) => {
+      const marker = L.marker(feeder.coordinates, {
+        icon: createCustomIcon(feeder.status),
+      }).addTo(map);
+
+      const statusColors = {
+        ok: '#66BB6A',
+        warning: '#FFB74D',
+        error: '#EF5350',
+      };
+
+      marker.bindPopup(`
+        <div style="padding: 12px; min-width: 200px; font-family: Inter, sans-serif;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: ${statusColors[feeder.status]};"></span>
+            <strong style="font-size: 14px; color: #333;">${feeder.name}</strong>
+          </div>
+          <p style="font-size: 12px; color: #666; margin-bottom: 12px;">${feeder.location}</p>
+          <div style="font-size: 12px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="color: #666;">Food Level:</span>
+              <span style="font-weight: 500;">${feeder.foodLevel}%</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #666;">Temperature:</span>
+              <span style="font-weight: 500;">${feeder.temperature}°C</span>
+            </div>
+          </div>
+          <a href="/feeder/${feeder.id}" style="
+            display: block;
+            text-align: center;
+            padding: 8px 16px;
+            background: #66BB6A;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+          ">View Details</a>
+        </div>
+      `);
+    });
+
     // Fit bounds to show all markers
     if (feeders.length > 0) {
       const bounds = L.latLngBounds(feeders.map(f => f.coordinates));
       map.fitBounds(bounds, { padding: [50, 50] });
     }
-  }, [map]);
 
-  return null;
-}
+    mapRef.current = map;
+    setMounted(true);
 
-export function FeederMap() {
-  const center: [number, number] = [40.4168, -3.7038];
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden shadow-sm border border-border">
-      <MapContainer
-        center={center}
-        zoom={15}
-        className="h-full w-full"
-        zoomControl={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <MapController />
-        {feeders.map((feeder) => (
-          <Marker
-            key={feeder.id}
-            position={feeder.coordinates}
-            icon={createCustomIcon(feeder.status)}
-          >
-            <Popup>
-              <div className="p-3 min-w-[200px]">
-                <div className="flex items-center gap-2 mb-2">
-                  <StatusIndicator status={feeder.status} size="md" />
-                  <h3 className="font-semibold text-foreground">{feeder.name}</h3>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">{feeder.location}</p>
-                <div className="space-y-1 text-sm mb-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Food Level:</span>
-                    <span className="font-medium">{feeder.foodLevel}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Temperature:</span>
-                    <span className="font-medium">{feeder.temperature}°C</span>
-                  </div>
-                </div>
-                <Link
-                  to={`/feeder/${feeder.id}`}
-                  className="block w-full text-center py-2 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                >
-                  View Details
-                </Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <div ref={mapContainerRef} className="h-full w-full" />
     </div>
   );
 }
