@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { feeders } from '@/data/feeders';
 import { StatusIndicator } from './StatusIndicator';
@@ -86,23 +86,28 @@ function SidebarContent() {
 }
 
 export function FeederSidebar() {
+  const location = useLocation();
+  const isFeederPage = location.pathname.startsWith('/feeder/');
+
   return (
     <>
-      {/* Mobile: Sheet/Drawer */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="fixed top-4 left-4 z-50 md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-80 p-0 flex flex-col">
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
+      {/* Mobile: Sheet/Drawer - only show trigger on main page */}
+      {!isFeederPage && (
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="fixed top-4 left-4 z-50 md:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80 p-0 flex flex-col">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      )}
 
       {/* Desktop: Fixed sidebar */}
       <aside className="hidden md:flex w-80 bg-card border-r border-border flex-col h-full">
