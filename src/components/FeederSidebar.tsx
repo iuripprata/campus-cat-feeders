@@ -1,14 +1,16 @@
 import { Link, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { feeders, getStatusLabel } from '@/data/feeders';
+import { feeders } from '@/data/feeders';
 import { StatusIndicator } from './StatusIndicator';
-import { Cat, MapPin } from 'lucide-react';
+import { Cat, MapPin, Menu } from 'lucide-react';
+import { Button } from './ui/button';
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 
-export function FeederSidebar() {
+function SidebarContent() {
   const { id } = useParams();
 
   return (
-    <aside className="w-80 bg-card border-r border-border flex flex-col h-full">
+    <>
       {/* Header */}
       <div className="p-6 border-b border-border">
         <Link to="/" className="flex items-center gap-3">
@@ -79,6 +81,33 @@ export function FeederSidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export function FeederSidebar() {
+  return (
+    <>
+      {/* Mobile: Sheet/Drawer */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="fixed top-4 left-4 z-50 md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-80 p-0 flex flex-col">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop: Fixed sidebar */}
+      <aside className="hidden md:flex w-80 bg-card border-r border-border flex-col h-full">
+        <SidebarContent />
+      </aside>
+    </>
   );
 }
