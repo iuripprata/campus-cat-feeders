@@ -102,6 +102,17 @@
 .leaflet-container {
   @apply rounded-lg;
   font-family: 'Inter', sans-serif;
+  z-index: 0 !important;
+}
+
+.leaflet-pane,
+.leaflet-control {
+  z-index: 1 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10 !important;
 }
 
 .leaflet-popup-content-wrapper {
