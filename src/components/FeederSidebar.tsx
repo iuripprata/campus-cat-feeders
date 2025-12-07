@@ -8,7 +8,7 @@ export function FeederSidebar() {
   const { id } = useParams();
 
   return (
-    <aside className="w-80 bg-card border-r border-border flex flex-col h-full">
+    <aside className="hidden md:flex w-80 bg-card border-r border-border flex flex-col h-full">
       {/* Header */}
       <div className="p-6 border-b border-border">
         <Link to="/" className="flex items-center gap-3">
