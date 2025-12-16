@@ -55,7 +55,7 @@ export function FeederMap() {
 
     // Initialize map
     const map = L.map(mapContainerRef.current, {
-      center: [40.4168, -3.7038],
+      center: [-3.7440688, -38.5361123],
       zoom: 15,
       zoomControl: true,
     });
