@@ -19,8 +19,8 @@ const Index = () => {
       <main className="hidden md:flex flex-1 p-4 md:p-6">
         <div className="h-full flex flex-col w-full">
           <div className="mb-4">
-            <h2 className="text-2xl font-semibold text-foreground">Campus Overview</h2>
-            <p className="text-muted-foreground">Monitor all feeders across the university</p>
+            <h2 className="text-2xl font-semibold text-foreground">Mapa dos Alimentadores</h2>
+            <p className="text-muted-foreground">Monitore os alimentadores</p>
           </div>
           <div className="flex-1">
             <FeederMap />
@@ -49,8 +49,8 @@ const Index = () => {
 
         {/* Header */}
         <div className="p-4 pb-2">
-          <h2 className="text-xl font-semibold text-foreground">Campus Overview</h2>
-          <p className="text-sm text-muted-foreground">Monitor all feeders</p>
+          <h2 className="text-xl font-semibold text-foreground">Mapa dos Alimentadores</h2>
+          <p className="text-sm text-muted-foreground">Monitore os alimentadores</p>
         </div>
 
         {/* Map Section */}
@@ -64,7 +64,7 @@ const Index = () => {
               onClick={() => setIsMapFullscreen(true)}
             >
               <Maximize2 className="h-4 w-4" />
-              Expand
+              Expandir
             </Button>
           </div>
         </div>
@@ -72,7 +72,7 @@ const Index = () => {
         {/* Feeders List */}
         <div className="flex-1 overflow-auto px-4 pb-4">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            All Feeders ({feeders.length})
+            Todos os Alimentadores ({feeders.length})
           </h3>
           <div className="space-y-2">
             {feeders.map((feeder) => (
