@@ -1,79 +1,87 @@
 import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
+import L from 'leaflet';
+import { Link } from 'react-router-dom';
 import { feeders, FeederStatus } from '@/data/feeders';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import 'leaflet/dist/leaflet.css';
 
-// TODO: Replace with your Mapbox public token from https://mapbox.com/
-const MAPBOX_TOKEN = 'YOUR_MAPBOX_PUBLIC_TOKEN';
+// Fix for default markers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
 
-const getStatusColor = (status: FeederStatus): string => {
+const createCustomIcon = (status: FeederStatus) => {
   const colors = {
     ok: '#66BB6A',
     warning: '#FFB74D',
     error: '#EF5350',
   };
-  return colors[status];
+
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        background-color: ${colors[status]};
+        width: 32px;
+        height: 32px;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <svg style="transform: rotate(45deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="white">
+          <circle cx="12" cy="12" r="8"/>
+        </svg>
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
 };
 
 export function FeederMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const [tokenInput, setTokenInput] = useState('');
-  const [token, setToken] = useState(() => {
-    const saved = localStorage.getItem('mapbox_token');
-    return saved || (MAPBOX_TOKEN !== 'YOUR_MAPBOX_PUBLIC_TOKEN' ? MAPBOX_TOKEN : '');
-  });
-
-  const handleTokenSubmit = () => {
-    if (tokenInput.trim()) {
-      localStorage.setItem('mapbox_token', tokenInput.trim());
-      setToken(tokenInput.trim());
-    }
-  };
+  const mapRef = useRef<L.Map | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current || !token) return;
+    if (!mapContainerRef.current || mapRef.current) return;
 
-    mapboxgl.accessToken = token;
-
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      center: [-38.5361123, -3.7440688],
-      zoom: 16,
-      pitch: 45,
+    // Initialize map
+    const map = L.map(mapContainerRef.current, {
+      center: [-3.7440688, -38.5361123],
+      zoom: 15,
+      zoomControl: true,
     });
 
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    // ESRI World Imagery - free satellite view with detailed zoom
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+      maxZoom: 19,
+    }).addTo(map);
 
     // Add markers for each feeder
     feeders.forEach((feeder) => {
-      const el = document.createElement('div');
-      el.className = 'feeder-marker';
-      el.innerHTML = `
-        <div style="
-          background-color: ${getStatusColor(feeder.status)};
-          width: 32px;
-          height: 32px;
-          border-radius: 50% 50% 50% 0;
-          transform: rotate(-45deg);
-          border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        ">
-          <svg style="transform: rotate(45deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="white">
-            <circle cx="12" cy="12" r="8"/>
-          </svg>
-        </div>
-      `;
+      const marker = L.marker(feeder.coordinates, {
+        icon: createCustomIcon(feeder.status),
+      }).addTo(map);
 
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+      const statusColors = {
+        ok: '#66BB6A',
+        warning: '#FFB74D',
+        error: '#EF5350',
+      };
+
+      marker.bindPopup(`
         <div style="padding: 12px; min-width: 200px; font-family: Inter, sans-serif;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: ${getStatusColor(feeder.status)};"></span>
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: ${statusColors[feeder.status]};"></span>
             <strong style="font-size: 14px; color: #333;">${feeder.name}</strong>
           </div>
           <p style="font-size: 12px; color: #666; margin-bottom: 12px;">${feeder.location}</p>
@@ -100,14 +108,16 @@ export function FeederMap() {
           ">View Details</a>
         </div>
       `);
-
-      new mapboxgl.Marker(el)
-        .setLngLat([feeder.coordinates[1], feeder.coordinates[0]])
-        .setPopup(popup)
-        .addTo(map);
     });
 
+    // Fit bounds to show all markers
+    if (feeders.length > 0) {
+      const bounds = L.latLngBounds(feeders.map(f => f.coordinates));
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+
     mapRef.current = map;
+    setMounted(true);
 
     return () => {
       if (mapRef.current) {
@@ -115,43 +125,7 @@ export function FeederMap() {
         mapRef.current = null;
       }
     };
-  }, [token]);
-
-  if (!token) {
-    return (
-      <div className="h-full w-full rounded-lg overflow-hidden shadow-sm border border-border bg-card flex items-center justify-center">
-        <div className="p-6 max-w-md text-center space-y-4">
-          <h3 className="text-lg font-semibold text-foreground">Mapbox Token Required</h3>
-          <p className="text-sm text-muted-foreground">
-            Enter your Mapbox public token to view the map. Get one free at{' '}
-            <a 
-              href="https://mapbox.com/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary underline"
-            >
-              mapbox.com
-            </a>
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
-              placeholder="pk.eyJ1..."
-              className="flex-1 px-3 py-2 border border-border rounded-lg text-sm bg-background text-foreground"
-            />
-            <button
-              onClick={handleTokenSubmit}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90"
-            >
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  }, []);
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden shadow-sm border border-border">
