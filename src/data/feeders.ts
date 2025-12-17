@@ -16,8 +16,8 @@ export interface Feeder {
 export const feeders: Feeder[] = [
   {
     id: '1',
-    name: 'Feeder A',
-    location: 'Central Building',
+    name: 'Alimentador 1',
+    location: 'Pátio do BP',
     coordinates: [-3.744591, -38.536715],
     foodLevel: 85,
     humidity: 45,
@@ -28,8 +28,8 @@ export const feeders: Feeder[] = [
   },
   {
     id: '2',
-    name: 'Feeder B',
-    location: 'Library Garden',
+    name: 'Alimentador B',
+    location: 'Esquina do Pátio Central',
     coordinates: [-3.743853, -38.536317],
     foodLevel: 32,
     humidity: 52,
