@@ -25,7 +25,7 @@ function SidebarContent() {
       {/* Feeder List */}
       <div className="flex-1 overflow-auto p-4">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-2">
-          All Feeders ({feeders.length})
+          Todos os Alimentadores ({feeders.length})
         </h2>
         <nav className="space-y-1">
           {feeders.map((feeder) => (
