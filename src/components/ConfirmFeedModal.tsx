@@ -20,8 +20,8 @@ export function ConfirmFeedModal({ open, onOpenChange, feederName }: ConfirmFeed
   const handleConfirm = () => {
     // Simulate API call
     toast({
-      title: 'Food Released!',
-      description: `Food has been released at ${feederName}. The cats are happy! 🐱`,
+      title: 'Alimento Liberado!',
+      description: `Alimento foi liberado em ${feederName}. Os gatos estão felizes! 🐱`,
     });
     onOpenChange(false);
   };
@@ -30,19 +30,19 @@ export function ConfirmFeedModal({ open, onOpenChange, feederName }: ConfirmFeed
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-xl">Confirm Food Release</AlertDialogTitle>
+          <AlertDialogTitle className="text-xl">Confirmar Liberação de Alimento</AlertDialogTitle>
           <AlertDialogDescription className="text-base">
-            Confirm release of food at <span className="font-semibold text-foreground">{feederName}</span>? 
-            This action is immediate.
+            Confirmar liberação de alimento em <span className="font-semibold text-foreground">{feederName}</span>? 
+            Esta ação é imediata.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
-          <AlertDialogCancel className="px-6">Cancel</AlertDialogCancel>
+          <AlertDialogCancel className="px-6">Cancelar</AlertDialogCancel>
           <AlertDialogAction 
             onClick={handleConfirm}
             className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-6"
           >
-            Yes, Release
+            Sim, Liberar
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

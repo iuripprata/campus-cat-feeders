@@ -22,12 +22,12 @@ const FeederDetails = () => {
         <FeederSidebar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold text-foreground mb-2">Feeder Not Found</h2>
-            <p className="text-muted-foreground mb-4">The requested feeder doesn't exist.</p>
+            <h2 className="text-2xl font-semibold text-foreground mb-2">Alimentador Não Encontrado</h2>
+            <p className="text-muted-foreground mb-4">O alimentador solicitado não existe.</p>
             <Link to="/">
               <Button variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Map
+                Voltar ao Mapa
               </Button>
             </Link>
           </div>
@@ -73,14 +73,14 @@ const FeederDetails = () => {
             {/* Other Sensors */}
             <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <DataCard
-                title="Humidity"
+                title="Umidade"
                 value={feeder.humidity}
                 unit="%"
                 icon={Droplets}
                 iconColor="bg-blue-100"
               />
               <DataCard
-                title="Temperature"
+                title="Temperatura"
                 value={feeder.temperature}
                 unit="°C"
                 icon={Thermometer}
@@ -91,11 +91,11 @@ const FeederDetails = () => {
 
           {/* Manual Control Card */}
           <div className="bg-card rounded-xl p-6 shadow-sm border border-border mb-8">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Manual Control</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Controle Manual</h3>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <p className="text-muted-foreground">
-                  Release food manually. Use this option if automatic feeding is insufficient.
+                  Liberar alimento manualmente. Use essa opção se a alimentação estiver insuficiente mesmo com a automação.
                 </p>
               </div>
               <Button 
@@ -109,21 +109,21 @@ const FeederDetails = () => {
 
           {/* Device Info */}
           <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Device Information</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Informações do Dispositivo</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 p-3 bg-surface rounded-lg">
                 <Clock className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Last Update</p>
+                  <p className="text-xs text-muted-foreground">Última Atualização</p>
                   <p className="text-sm font-medium text-foreground">
-                    {format(lastUpdateDate, 'MMM d, yyyy HH:mm')}
+                    {format(lastUpdateDate, "dd/MM/yyyy HH:mm")}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-surface rounded-lg">
                 <Cpu className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Device ID</p>
+                  <p className="text-xs text-muted-foreground">ID do Dispositivo</p>
                   <p className="text-sm font-medium text-foreground font-mono">
                     {feeder.deviceId}
                   </p>
