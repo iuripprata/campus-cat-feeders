@@ -60,12 +60,12 @@ export const getStatusColor = (status: FeederStatus): string => {
 export const getStatusLabel = (status: FeederStatus): string => {
   switch (status) {
     case 'ok':
-      return 'Operating Normally';
+      return 'Operando Normalmente';
     case 'warning':
-      return 'Low Food Level';
+      return 'Nível de Comida Baixo';
     case 'error':
-      return 'Needs Attention';
+      return 'Necessita Atenção';
     default:
-      return 'Unknown';
+      return 'Desconhecido';
   }
 };
