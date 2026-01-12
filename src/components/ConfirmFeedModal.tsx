@@ -14,16 +14,21 @@ interface ConfirmFeedModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   feederName: string;
+  onConfirm?: () => void;
 }
 
-export function ConfirmFeedModal({ open, onOpenChange, feederName }: ConfirmFeedModalProps) {
+export function ConfirmFeedModal({ open, onOpenChange, feederName, onConfirm }: ConfirmFeedModalProps) {
   const handleConfirm = () => {
-    // Simulate API call
-    toast({
-      title: 'Alimento Liberado!',
-      description: `Alimento foi liberado em ${feederName}. Os gatos estão felizes! 🐱`,
-    });
-    onOpenChange(false);
+    if (onConfirm) {
+      onConfirm();
+    } else {
+      // Fallback para comportamento anterior
+      toast({
+        title: 'Alimento Liberado!',
+        description: `Alimento foi liberado em ${feederName}. Os gatos estão felizes! 🐱`,
+      });
+      onOpenChange(false);
+    }
   };
 
   return (

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Droplets, Thermometer, Clock, Cpu } from 'lucide-react';
+import { ArrowLeft, Droplets, Thermometer, Clock, Cpu, Wifi, WifiOff } from 'lucide-react';
 import { FeederSidebar } from '@/components/FeederSidebar';
 import { FoodLevelGauge } from '@/components/FoodLevelGauge';
 import { DataCard } from '@/components/DataCard';
@@ -9,12 +9,54 @@ import { StatusIndicator } from '@/components/StatusIndicator';
 import { Button } from '@/components/ui/button';
 import { getFeederById, getStatusLabel } from '@/data/feeders';
 import { format } from 'date-fns';
+import { mqttService, TOPIC_TELEMETRIA, TelemetriaData } from '@/services/mqttService';
+import { useToast } from '@/components/ui/use-toast';
 
 const FeederDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [liveData, setLiveData] = useState<TelemetriaData | null>(null);
+  const { toast } = useToast();
   
   const feeder = getFeederById(id || '');
+
+  useEffect(() => {
+    // Conectar ao MQTT quando o componente montar
+    console.log('🚀 Inicializando conexão MQTT...');
+    mqttService.connect();
+
+    // Escutar mensagens de telemetria
+    mqttService.onMessage(TOPIC_TELEMETRIA, (data: TelemetriaData) => {
+      console.log('📊 Dados ao vivo recebidos:', data);
+      
+      // Só atualiza se for do dispositivo correto
+      if (data.deviceId === feeder?.deviceId) {
+        setLiveData(data);
+        setIsConnected(true);
+        
+        // Mostrar notificação se houver alerta
+        if (data.status === 'warning') {
+          toast({
+            title: "⚠️ Atenção",
+            description: "Nível de comida baixo!",
+            variant: "default",
+          });
+        } else if (data.status === 'error') {
+          toast({
+            title: "🚨 Alerta",
+            description: "Alimentador requer atenção imediata!",
+            variant: "destructive",
+          });
+        }
+      }
+    });
+
+    // Cleanup ao desmontar
+    return () => {
+      mqttService.disconnect();
+    };
+  }, [feeder?.deviceId, toast]);
 
   if (!feeder) {
     return (
@@ -36,7 +78,31 @@ const FeederDetails = () => {
     );
   }
 
-  const lastUpdateDate = new Date(feeder.lastUpdate);
+  // Usar dados ao vivo se disponíveis, senão usar dados estáticos
+  const currentData = liveData || {
+    foodLevel: feeder.foodLevel,
+    temperature: feeder.temperature,
+    humidity: feeder.humidity,
+    status: feeder.status,
+  };
+
+  const lastUpdateDate = liveData 
+    ? new Date(liveData.timestamp) 
+    : new Date(feeder.lastUpdate);
+
+  const handleFeedClick = () => {
+    console.log('🎯 Enviando comando para liberar alimento...');
+    
+    // Enviar comando via MQTT
+    mqttService.sendCommand('feed');
+    
+    // Fechar modal e mostrar toast
+    setShowConfirmModal(false);
+    toast({
+      title: "✓ Comando enviado",
+      description: "O alimentador está liberando comida...",
+    });
+  };
 
   return (
     <div className="flex h-screen bg-surface">
@@ -56,9 +122,21 @@ const FeederDetails = () => {
                   <h1 className="text-2xl font-bold text-foreground">
                     {feeder.name} - {feeder.location}
                   </h1>
-                  <StatusIndicator status={feeder.status} size="lg" pulse />
+                  <StatusIndicator status={currentData.status} size="lg" pulse />
+                  {isConnected ? (
+                    <span title="Conectado ao vivo">
+                      <Wifi className="w-5 h-5 text-green-500" />
+                    </span>
+                  ) : (
+                    <span title="Dados em cache">
+                      <WifiOff className="w-5 h-5 text-gray-400" />
+                    </span>
+                  )}
                 </div>
-                <p className="text-muted-foreground">{getStatusLabel(feeder.status)}</p>
+                <p className="text-muted-foreground">
+                  {getStatusLabel(currentData.status)}
+                  {isConnected && <span className="text-green-500 ml-2">• Ao vivo</span>}
+                </p>
               </div>
             </div>
           </div>
@@ -67,16 +145,16 @@ const FeederDetails = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Food Level Card */}
             <div className="bg-card rounded-xl p-6 shadow-sm border border-border flex flex-col items-center justify-center">
-              <FoodLevelGauge value={feeder.foodLevel} />
+              <FoodLevelGauge value={currentData.foodLevel} />
             </div>
 
             {/* Food Quality Card */}
             <div className="bg-card rounded-xl p-6 shadow-sm border border-border flex flex-col items-center justify-center">
               <h3 className="text-sm font-medium text-muted-foreground mb-4">Qualidade da Ração</h3>
               {(() => {
-                const quality = feeder.humidity <= 50 && feeder.temperature <= 25 
+                const quality = currentData.humidity <= 50 && currentData.temperature <= 25 
                   ? "Boa" 
-                  : feeder.humidity <= 70 && feeder.temperature <= 35 
+                  : currentData.humidity <= 70 && currentData.temperature <= 35 
                     ? "Atenção" 
                     : "Crítica";
                 const colorClass = quality === "Boa" 
@@ -101,6 +179,29 @@ const FeederDetails = () => {
             </div>
           </div>
 
+          {/* Environment Data Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+              <div className="flex items-center gap-3 mb-2">
+                <Thermometer className="w-5 h-5 text-orange-500" />
+                <h3 className="text-sm font-medium text-muted-foreground">Temperatura</h3>
+              </div>
+              <p className="text-3xl font-bold text-foreground">
+                {currentData.temperature.toFixed(1)}°C
+              </p>
+            </div>
+
+            <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+              <div className="flex items-center gap-3 mb-2">
+                <Droplets className="w-5 h-5 text-blue-500" />
+                <h3 className="text-sm font-medium text-muted-foreground">Umidade</h3>
+              </div>
+              <p className="text-3xl font-bold text-foreground">
+                {currentData.humidity.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+
           {/* Manual Control Card */}
           <div className="bg-card rounded-xl p-6 shadow-sm border border-border mb-8">
             <h3 className="text-lg font-semibold text-foreground mb-4">Controle Manual</h3>
@@ -109,10 +210,16 @@ const FeederDetails = () => {
                 <p className="text-muted-foreground">
                   Liberar alimento manualmente. Use essa opção se a alimentação estiver insuficiente mesmo com a automação.
                 </p>
+                {!isConnected && (
+                  <p className="text-sm text-orange-500 mt-2">
+                    ⚠️ Dispositivo offline - comando pode não ser executado
+                  </p>
+                )}
               </div>
               <Button 
                 onClick={() => setShowConfirmModal(true)}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-8 py-6 text-lg font-semibold rounded-xl shadow-md transition-all hover:shadow-lg"
+                disabled={!isConnected}
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-8 py-6 text-lg font-semibold rounded-xl shadow-md transition-all hover:shadow-lg disabled:opacity-50"
               >
                 LIBERAR ALIMENTO
               </Button>
@@ -128,7 +235,7 @@ const FeederDetails = () => {
                 <div>
                   <p className="text-xs text-muted-foreground">Última Atualização</p>
                   <p className="text-sm font-medium text-foreground">
-                    {format(lastUpdateDate, "dd/MM/yyyy HH:mm")}
+                    {format(lastUpdateDate, "dd/MM/yyyy HH:mm:ss")}
                   </p>
                 </div>
               </div>
@@ -149,6 +256,7 @@ const FeederDetails = () => {
           open={showConfirmModal}
           onOpenChange={setShowConfirmModal}
           feederName={`${feeder.name} - ${feeder.location}`}
+          onConfirm={handleFeedClick}
         />
       </main>
     </div>
