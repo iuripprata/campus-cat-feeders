@@ -64,20 +64,40 @@ const FeederDetails = () => {
           </div>
 
           {/* Data Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {/* Food Level Card - Larger */}
-            <div className="md:col-span-1 bg-card rounded-xl p-6 shadow-sm border border-border flex flex-col items-center justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Food Level Card */}
+            <div className="bg-card rounded-xl p-6 shadow-sm border border-border flex flex-col items-center justify-center">
               <FoodLevelGauge value={feeder.foodLevel} />
             </div>
 
-            {/* Food Quality */}
-            <div className="md:col-span-2 flex items-center justify-center">
-              <DataCard
-                title="Qualidade da Ração"
-                value={feeder.humidity <= 60 && feeder.temperature <= 30 ? "Boa" : "Atenção"}
-                icon={Droplets}
-                iconColor={feeder.humidity <= 60 && feeder.temperature <= 30 ? "bg-green-100" : "bg-orange-100"}
-              />
+            {/* Food Quality Card */}
+            <div className="bg-card rounded-xl p-6 shadow-sm border border-border flex flex-col items-center justify-center">
+              <h3 className="text-sm font-medium text-muted-foreground mb-4">Qualidade da Ração</h3>
+              {(() => {
+                const quality = feeder.humidity <= 50 && feeder.temperature <= 25 
+                  ? "Boa" 
+                  : feeder.humidity <= 70 && feeder.temperature <= 35 
+                    ? "Atenção" 
+                    : "Crítica";
+                const colorClass = quality === "Boa" 
+                  ? "text-green-500" 
+                  : quality === "Atenção" 
+                    ? "text-orange-500" 
+                    : "text-red-500";
+                const bgClass = quality === "Boa" 
+                  ? "bg-green-100" 
+                  : quality === "Atenção" 
+                    ? "bg-orange-100" 
+                    : "bg-red-100";
+                return (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className={`p-4 rounded-full ${bgClass}`}>
+                      <Thermometer className={`w-8 h-8 ${colorClass}`} />
+                    </div>
+                    <span className={`text-4xl font-bold ${colorClass}`}>{quality}</span>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
