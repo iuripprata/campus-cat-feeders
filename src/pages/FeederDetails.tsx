@@ -70,21 +70,13 @@ const FeederDetails = () => {
               <FoodLevelGauge value={feeder.foodLevel} />
             </div>
 
-            {/* Other Sensors */}
-            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Food Quality */}
+            <div className="md:col-span-2 flex items-center justify-center">
               <DataCard
-                title="Umidade"
-                value={feeder.humidity}
-                unit="%"
+                title="Qualidade da Ração"
+                value={feeder.humidity <= 60 && feeder.temperature <= 30 ? "Boa" : "Atenção"}
                 icon={Droplets}
-                iconColor="bg-blue-100"
-              />
-              <DataCard
-                title="Temperatura"
-                value={feeder.temperature}
-                unit="°C"
-                icon={Thermometer}
-                iconColor="bg-orange-100"
+                iconColor={feeder.humidity <= 60 && feeder.temperature <= 30 ? "bg-green-100" : "bg-orange-100"}
               />
             </div>
           </div>
